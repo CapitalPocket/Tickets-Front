@@ -46,7 +46,7 @@ export default function DonutChartComponent() {
           showLabel={true}
           valueFormatter={currencyFormatter}
           showTooltip={false}
-          colors={['blueStatus', 'grayStatus','violetStatus','greenStatus', 'amberStatus','redStatus' ]}
+          colors={['blueStatus', 'grayStatus','violetStatus','greenStatus', 'amberStatus','redStatus','orange' ]}
         />
         <p className="mt-8 flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
           <span>Estados</span>

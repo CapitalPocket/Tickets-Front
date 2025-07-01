@@ -35,7 +35,7 @@ export default function Modal({
               </button>
             </>
           )}
-          {['Usado', 'Cancelado', 'Devolucion' , 'No exitoso'].includes(status) && (
+          {['Usado', 'Cancelado', 'Devolucion' , 'No exitoso','Desconocido'].includes(status) && (
             <button
               className="w-full rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
               onClick={onClose}

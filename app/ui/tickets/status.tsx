@@ -11,7 +11,9 @@ export default function TicketStatus({ status }: { status: string }) {
           'bg-blue-500 text-white': status === 'Usado',
           'bg-red-500 text-white': status === 'Cancelado',
           'bg-amber-500 text-white': status === 'Devolucion',
-          'bg-violet-500 text-white': status === 'No exitoso', 
+          'bg-violet-500 text-white': status === 'No exitoso',
+          'bg-orange-400 text-white': status === 'Desconocido',
+
         },
       )}
     >
@@ -35,6 +37,7 @@ export default function TicketStatus({ status }: { status: string }) {
         </>
       ) : null}
       {status === 'No exitoso' ? <>No exitoso</> : null}
+      {status === 'Desconocido' ? <>Desconocido</> : null}
     </span>
   );
 }
