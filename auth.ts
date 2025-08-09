@@ -11,8 +11,7 @@ async function getUser(
 ): Promise<LoginResponse | undefined> {
   try {
     const response = await axios.post<ApiResponse>(
-      `https://api.pockiaction.xyz/api/taquilla/loginUser`,
-
+      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/loginUser`,
       { email, password },
     );
 
@@ -44,7 +43,7 @@ async function getUser(
 
 export const {handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  secret: 'zCMNmlHUQGlBdB6sKlITf88/4K3I9NRfuXOFZ0R6ON0=',
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       async authorize(credentials) {

@@ -83,7 +83,7 @@ export async function createCandidato(prevState: Statee, formData: FormData) {
 
   try {
     const response = await axios.post(
-      `https://api.pockiaction.xyz/api/taquilla/createUser`,
+      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/createUser`,
       {
         name: nombre,
         email: nombreUser,
@@ -106,7 +106,7 @@ export async function createCandidato(prevState: Statee, formData: FormData) {
 export async function validateTicket(ticketCode: any) {
   try {
     const response = await axios.post(
-      `https://api.pockiaction.xyz/api/taquilla/validateTicket`,
+      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/validateTicket`,
       ticketCode,
     );
     return response.data.message;
@@ -166,7 +166,7 @@ export async function updateUser(user: any) {
   try {
     
     const response = await axios.post(
-      `https://api.pockiaction.xyz/api/taquilla/updateUserByIdTaquilla`,
+      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/updateUserByIdTaquilla`,
       user,
     );
     revalidatePath('/dashboard/candidatos');

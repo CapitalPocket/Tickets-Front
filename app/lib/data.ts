@@ -112,7 +112,7 @@ const ITEMS_PER_PAGE = 9;
 export async function fetchInvoices(idpark: string, month: string) {
   noStore();
   try {
-    const apiUrl = `https://api.pockiaction.xyz/api/marketing/generateInovice`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/marketing/generateInovice`;
     const { data: tickets } = await axios.post(apiUrl, {
       idpark: idpark,
       month: month,
@@ -177,7 +177,7 @@ export async function fetchFilteredCandidatos(
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const apiUrl = `https://api.pockiaction.xyz/api/marketing/getAllTicketsTwo`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/marketing/getAllTicketsTwo`;
     const { data: tickets } = await axios.post(apiUrl, {
       idpark: user?.park,
     });
@@ -251,7 +251,7 @@ export async function fetchFilteredInvoices(
 export async function fetchTicketsCount(query: string, user: any) {
   noStore();
   try {
-    const apiUrl = `https://api.pockiaction.xyz/api/marketing/getAllTicketsTwo`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/marketing/getAllTicketsTwo`;
     const { data: tickets } = await axios.post(apiUrl, {
       idpark: user?.park,
     });
@@ -292,7 +292,7 @@ export async function fetchFilteredUsers(
 
   try {
     const effectiveStatus = status || 'Habilitado';
-    const apiUrl = `https://api.pockiaction.xyz/api/taquilla/getAllUsersTaquilla/${effectiveStatus}`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/getAllUsersTaquilla/${effectiveStatus}`;
     const response = await axios.get(apiUrl);
     if (response.data.message) {
       console.warn(response.data.message);
@@ -329,7 +329,7 @@ export async function fetchFilteredUsersPage(
 
   try {
     const effectiveStatus = status || 'Habilitado';
-    const apiUrl = `https://api.pockiaction.xyz/api/taquilla/getAllUsersTaquilla/${effectiveStatus}`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/getAllUsersTaquilla/${effectiveStatus}`;
     const response = await axios.get(apiUrl);
     if (response.data.message) {
       console.warn(response.data.message);
@@ -359,7 +359,7 @@ export async function getTotalSales(idPark: string, filter: string) {
   noStore();
 
   try {
-    const apiUrl = `https://api.pockiaction.xyz/api/data/totalsales`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/data/totalsales`;
     const response = await axios.post(apiUrl, {
       idPark: idPark,
       filterType: filter,
