@@ -2,6 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 
 type Role = 'administrador' | 'supervisor' | 'marketing' | 'taquillero';
 export const authConfig = {
+  secret: 'zCMNmlHUQGlBdB6sKlITf88/4K3I9NRfuXOFZ0R6ON0=',
   pages: {
     signIn: '/login',
   },
