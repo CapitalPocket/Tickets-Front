@@ -2,7 +2,9 @@
 
 import {
   BackspaceIcon,
+  KeyIcon,
   PencilIcon,
+  PencilSquareIcon,
   PlusIcon,
   TrashIcon,
   UserMinusIcon,
@@ -11,6 +13,8 @@ import {
 import Link from 'next/link';
 import { updateUser } from '@/app/lib/actions';
 import { useState } from 'react';
+import ResetPasswordModal from './ResertPassModal';
+
 
 export function CreateInvoice({ grupo }: { grupo: string }) {
   const href =
@@ -43,20 +47,20 @@ export function Enable({ id }: { id: string }) {
 
   const handleDeleteClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    setConfirmDelete(true); 
+    setConfirmDelete(true);
   };
 
   const handleConfirmDelete = () => {
     const payload = {
-      id: id, 
+      id: id,
       updates: {
-        statusprofile: "Habilitado", 
+        statusprofile: 'Habilitado',
       },
     };
-  
+
     updateUser(payload)
       .then(() => {
-        window.location.reload(); 
+        window.location.reload();
       })
       .catch((error) => {
         console.error('Error al Habilitado el usuario: ', error);
@@ -65,7 +69,7 @@ export function Enable({ id }: { id: string }) {
   };
 
   const handleCancelDelete = () => {
-    setConfirmDelete(false); 
+    setConfirmDelete(false);
   };
 
   return (
@@ -111,15 +115,15 @@ export function Desabled({ id }: { id: string }) {
 
   const handleConfirmDelete = () => {
     const payload = {
-      id: id, 
+      id: id,
       updates: {
-        statusprofile: "Deshabilitado", 
+        statusprofile: 'Deshabilitado',
       },
     };
-  
+
     updateUser(payload)
       .then(() => {
-        window.location.reload(); 
+        window.location.reload();
       })
       .catch((error) => {
         console.error('Error al deshabilitar el usuario: ', error);
@@ -128,7 +132,7 @@ export function Desabled({ id }: { id: string }) {
   };
 
   const handleCancelDelete = () => {
-    setConfirmDelete(false); 
+    setConfirmDelete(false);
   };
 
   return (
@@ -164,26 +168,25 @@ export function Desabled({ id }: { id: string }) {
   );
 }
 
-
 export function DeleteInvoice({ id }: { id: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleDeleteClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    setConfirmDelete(true); 
+    setConfirmDelete(true);
   };
 
   const handleConfirmDelete = () => {
     const payload = {
-      id: id, 
+      id: id,
       updates: {
-        statusprofile: "Eliminado", 
+        statusprofile: 'Eliminado',
       },
     };
-  
+
     updateUser(payload)
       .then(() => {
-        window.location.reload(); 
+        window.location.reload();
       })
       .catch((error) => {
         console.error('Error al Eliminado el usuario: ', error);
@@ -192,7 +195,7 @@ export function DeleteInvoice({ id }: { id: string }) {
   };
 
   const handleCancelDelete = () => {
-    setConfirmDelete(false); 
+    setConfirmDelete(false);
   };
 
   return (
@@ -232,24 +235,46 @@ export function DeleteInvoice({ id }: { id: string }) {
 export function UpdatePass({ id }: { id: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const handleUpdatePassword = async (newPassword: string) => {
+    try {
+      const payload = {
+        id: id,
+        updates: {
+          password: newPassword,
+        },
+      };
+
+      await updateUser(payload);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error al actualizar la contraseña: ", error);
+    }
+  };
+
   const handleDeleteClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    setConfirmDelete(true); 
+    setConfirmDelete(true);
+  };
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setIsModalOpen(true);
   };
 
   const handleConfirmDelete = () => {
     console.log(id);
     // deleteCandidato(id).then(() => {
-    //   window.location.reload(); 
+    //   window.location.reload();
     // })
     //   .catch((error) => {
     //     console.error("Error eliminando el candidato: ", error);
     //   }); // Llamar a la acción de eliminar
-    setConfirmDelete(false); 
+    setConfirmDelete(false);
   };
 
   const handleCancelDelete = () => {
-    setConfirmDelete(false); 
+    setConfirmDelete(false);
   };
 
   return (
@@ -257,13 +282,21 @@ export function UpdatePass({ id }: { id: string }) {
       {confirmDelete ? (
         <div className="flex items-center space-x-2">
           <button
-            className="flex items-center rounded-md bg-red-500 px-4 py-2 text-sm text-white transition-colors hover:bg-red-400"
-            onClick={handleConfirmDelete}
+            className="flex items-center rounded-md bg-red-400 px-4 py-2 text-sm text-white transition-colors hover:bg-red-400"
+            onClick={handleOpenModal}
           >
             <BackspaceIcon className="mr-2 w-5" />
-            Restablecer
+            <span className="">Restablecer</span>
           </button>
 
+          {/* Modal de restablecimiento */}
+          {isModalOpen && (
+            <ResetPasswordModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onResetPassword={handleUpdatePassword}
+            />
+          )}
           <button
             className="rounded-md border p-2 hover:bg-gray-100"
             onClick={handleCancelDelete}
@@ -274,13 +307,26 @@ export function UpdatePass({ id }: { id: string }) {
       ) : (
         <form>
           <button
-            className="rounded-md border bg-blue-200 p-2 hover:bg-blue-300"
+            className="rounded-md border p-2 hover:bg-blue-100"
             onClick={handleDeleteClick}
           >
-            <span className="">Restablecer Contraseña</span>
+            <KeyIcon className="w-5" />
           </button>
         </form>
       )}
     </div>
+  );
+}
+
+
+
+export function UpdateUser({ id, page }: { id: string, page: number }) {
+  const href ='/dashboard/candidatos/' + id + '/edit?page=' + page;
+  return (
+    <Link
+      href={href}
+      className="rounded-md border p-2 hover:bg-gray-100">
+     <PencilSquareIcon className="w-5" />
+    </Link>
   );
 }

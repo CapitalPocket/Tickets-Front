@@ -7,6 +7,7 @@ import { User, CandidatosTable, Ticket, UserProfile } from './definitions';
 import { unstable_noStore as noStore } from 'next/cache';
 import axios from 'axios';
 import { formatCurrency, formatDateToLocal } from './utils';
+import { auth } from '@/auth';
 
 export async function fetchCardDataCandidatos(grupo: string) {
   noStore();
@@ -109,19 +110,19 @@ export async function fetchCardData() {
 
 const ITEMS_PER_PAGE = 9;
 
-export async function fetchInvoices(idpark: string, month: string) {
+export async function fetchInvoices(initialDate: any, finalDate: any) {
   noStore();
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/marketing/generateInovice`;
     const { data: tickets } = await axios.post(apiUrl, {
-      idpark: idpark,
-      month: month,
+      initialDate: initialDate,
+      finalDate: finalDate,
     });
 
     return tickets;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch facturas.');
+    throw new Error('Failed to fetch Informes.');
   }
 }
 
@@ -135,36 +136,27 @@ export async function getUser(email: string) {
   }
 }
 
-export async function fetchCandidatoById(id: string) {
-  noStore();
+export async function fetchUserByIdTaquilla(
+  id: string,
+): Promise<UserProfile | null> {
   try {
-    const data = await sql<CandidatosTable>`
-      SELECT
-        candidato.id,
-        candidato.tipoid,
-        candidato.nombre,
-        candidato.celular,
-        candidato.cargo,
-        candidato.correo,
-        candidato.motivo,
-        candidato.estado_proceso,
-        candidato.fecha_envio,
-        candidato.fecha_ingreso,
-        candidato.grupo,
-        candidato.estadoCandidato,
-        candidato.user_creo
-      FROM candidato
-      WHERE candidato.id = ${id};
-    `;
+    const session = await auth();
+    const token = session?.accessToken;
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/getUserByIdTaquilla`;
+    const response = await axios.post(
+      apiUrl,
+      { id: id },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
 
-    const candidato = data.rows.map((candidato) => ({
-      ...candidato,
-    }));
-
-    return candidato[0];
+    if (response.data.message) {
+      return null;
+    }
+    const user: UserProfile = response.data as UserProfile;
+    return user;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch candidate.');
+    console.error('API Error:', error);
+    throw new Error('Failed to fetch user.');
   }
 }
 
@@ -177,10 +169,15 @@ export async function fetchFilteredCandidatos(
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
+    const session = await auth();
+    const token = session?.accessToken;
+
     const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/marketing/getAllTicketsTwo`;
-    const { data: tickets } = await axios.post(apiUrl, {
-      idpark: user?.park,
-    });
+    const { data: tickets } = await axios.post(
+      apiUrl,
+      { idpark: user?.park }, // 🔹 Cuerpo de la petición
+      { headers: { Authorization: `Bearer ${token}` } }, // 🔹 Headers en el tercer parámetro
+    );
 
     const filteredTickets = tickets.filter((ticket: Ticket) => {
       if (user?.role === 'taquillero' && !query.trim()) {
@@ -195,7 +192,9 @@ export async function fetchFilteredCandidatos(
         ticket.phone_number?.toLowerCase().includes(searchString) ||
         ticket.date_ticket?.toLowerCase().includes(searchString) ||
         ticket.status?.toLowerCase().includes(searchString) ||
-        ticket.identity_number?.toLowerCase().includes(searchString)
+        ticket.id_operation?.toLowerCase().includes(searchString) ||
+        ticket.identity_number?.toLowerCase().includes(searchString)||
+        ticket.motive?.toLowerCase().includes(searchString)
       );
     });
 
@@ -251,12 +250,15 @@ export async function fetchFilteredInvoices(
 export async function fetchTicketsCount(query: string, user: any) {
   noStore();
   try {
+    const session = await auth();
+    const token = session?.accessToken;
+
     const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/marketing/getAllTicketsTwo`;
-    const { data: tickets } = await axios.post(apiUrl, {
-      idpark: user?.park,
-    });
-
-
+    const { data: tickets } = await axios.post(
+      apiUrl,
+      { idpark: user?.park }, // 🔹 Cuerpo de la petición
+      { headers: { Authorization: `Bearer ${token}` } }, // 🔹 Headers en el tercer parámetro
+    );
 
     const searchString = query.toLowerCase();
     const count = tickets.filter((ticket: Ticket) => {
@@ -270,6 +272,7 @@ export async function fetchTicketsCount(query: string, user: any) {
         ticket.phone_number?.toLowerCase().includes(searchString) ||
         ticket.date_ticket?.toLowerCase().includes(searchString) ||
         ticket.status?.toLowerCase().includes(searchString) ||
+        ticket.id_operation?.toLowerCase().includes(searchString) ||
         ticket.identity_number?.toLowerCase().includes(searchString)
       );
     }).length;
@@ -289,14 +292,19 @@ export async function fetchFilteredUsers(
 ) {
   noStore();
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
+  const session = await auth();
+  const token = session?.accessToken;
   try {
     const effectiveStatus = status || 'Habilitado';
     const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/getAllUsersTaquilla/${effectiveStatus}`;
-    const response = await axios.get(apiUrl);
+    const response = await axios.get(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Agregar el token en los headers
+      },
+    });
     if (response.data.message) {
       console.warn(response.data.message);
-      return 0;
+      return [];
     }
     const users = response.data;
     const filteredUsers = users.filter((user: UserProfile) => {
@@ -326,17 +334,22 @@ export async function fetchFilteredUsersPage(
   status: string = 'Habilitado',
 ) {
   noStore();
+  const session = await auth();
+  const token = session?.accessToken;
 
   try {
     const effectiveStatus = status || 'Habilitado';
     const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/getAllUsersTaquilla/${effectiveStatus}`;
-    const response = await axios.get(apiUrl);
+    const response = await axios.get(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Agregar el token en los headers
+      },
+    });
     if (response.data.message) {
       console.warn(response.data.message);
       return 1;
     }
     const users = response.data;
-
     const count = users.filter((user: UserProfile) => {
       const searchString = query.toLowerCase();
       return (
@@ -346,7 +359,6 @@ export async function fetchFilteredUsersPage(
         user.statusprofile?.toLowerCase().includes(searchString)
       );
     }).length;
-
     const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
     return totalPages;
   } catch (error) {
@@ -355,315 +367,218 @@ export async function fetchFilteredUsersPage(
   }
 }
 
-export async function getTotalSales(idPark: string, filter: string) {
-  noStore();
-
-  try {
-    const apiUrl = `${process.env.NEXT_PUBLIC_BACK_LINK}/api/data/totalsales`;
-    const response = await axios.post(apiUrl, {
-      idPark: idPark,
-      filterType: filter,
-    });
-    if (response.data.totalSales && response.data.totalSales.length > 0) {
-      const transformedData = response.data.totalSales.map((sale: any) => ({
-        date:
-          filter === 'day'
-            ? formatDateToLocal(sale?.date) || sale?.date
-            : sale?.date,
-        total_sales: parseFloat(sale?.total_sales),
-      }));
-      return transformedData;
-    }
-
-    console.warn('No hay registros de ventas.');
-    return [];
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of Users.' + error);
-  }
-}
-
-export async function getTotalSalesTipePasport(idPark: string, filter: string) {
-  noStore();
-
-  try {
-    const apiUrl = `/api/data/totalsalestipepasport`;
-    const response = await axios.post(apiUrl, {
-      idPark: idPark,
-      filterType: filter,
-    });
-
-    if (
-      response.data.TotalSalesTipePasport &&
-      response.data.TotalSalesTipePasport.length > 0
-    ) {
-      const groupedData: { [key: string]: any } = {};
-
-      response.data.TotalSalesTipePasport.forEach((sale: any) => {
-        const date = sale.date;
-
-        if (!groupedData[date]) {
-          groupedData[date] = {
-            date:
-              filter === 'day'
-                ? formatDateToLocal(sale?.date) || sale?.date
-                : sale?.date,
-            'Pasaporte Extremo': 0,
-            'Pasaporte Aventura': 0,
-            'Pasaporte Fusión': 0,
-            'Ingreso Sin Atracciones': 0,
-            'Pasaporte Acuático Adultos': 0,
-            'Pasaporte Acuático Niños': 0,
-            'Ingreso General': 0,
-            'N/A': 0,
-          };
-        }
-
-        let pasaporteNames: string[];
-        let pasaportePrices: number[];
-
-        if (sale.id_park === 1) {
-          pasaporteNames = [
-            'Pasaporte Extremo',
-            'Pasaporte Aventura',
-            'Pasaporte Fusión',
-            'Ingreso Sin Atracciones',
-          ];
-          pasaportePrices = [48600, 37000, 32000, 7600];
-        } else if (sale.id_park === 2) {
-          pasaporteNames = [
-            'Pasaporte Acuático Adultos',
-            'Pasaporte Acuático Niños',
-            'Ingreso General',
-            'N/A',
-          ];
-          pasaportePrices = [19200, 14200, 7600, 0];
-        } else {
-          pasaporteNames = [
-            'Pasaporte Tipo 1',
-            'Pasaporte Tipo 2',
-            'Pasaporte Tipo 3',
-            'Pasaporte Tipo 4',
-          ];
-          pasaportePrices = [0, 0, 0, 0];
-        }
-
-        groupedData[date][pasaporteNames[0]] +=
-          parseFloat(sale?.pastype1) * pasaportePrices[0];
-        groupedData[date][pasaporteNames[1]] +=
-          parseFloat(sale?.pastype2) * pasaportePrices[1];
-        groupedData[date][pasaporteNames[2]] +=
-          parseFloat(sale?.pastype3) * pasaportePrices[2];
-        groupedData[date][pasaporteNames[3]] +=
-          parseFloat(sale?.pastype4) * pasaportePrices[3];
-      });
-
-      const transformedData = Object.values(groupedData).map((group: any) => {
-        return {
-          date: group.date,
-          'Pasaporte Extremo': group['Pasaporte Extremo'].toString(),
-          'Pasaporte Aventura': group['Pasaporte Aventura'].toString(),
-          'Pasaporte Fusión': group['Pasaporte Fusión'].toString(),
-          'Ingreso Sin Atracciones':
-            group['Ingreso Sin Atracciones'].toString(),
-          'Pasaporte Acuático Adultos':
-            group['Pasaporte Acuático Adultos'].toString(),
-          'Pasaporte Acuático Niños':
-            group['Pasaporte Acuático Niños'].toString(),
-          'Ingreso General': group['Ingreso General'].toString(),
-          'N/A': group['N/A'].toString(),
-        };
-      });
-
-      
-      return transformedData;
-    }
-
-    console.warn('No hay registros de ventas.');
-    return [];
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of Users.' + error);
-  }
-}
-export async function getTotalSalesNumTipePasport(idPark: string, filter: string) {
-  noStore();
-
-  try {
-    const apiUrl = `/api/data/totalsalestipepasport`;
-    const response = await axios.post(apiUrl, {
-      idPark: idPark,
-      filterType: filter,
-    });
-
-    if (
-      response.data.TotalSalesTipePasport &&
-      response.data.TotalSalesTipePasport.length > 0
-    ) {
-      const groupedData: { [key: string]: any } = {};
-
-      response.data.TotalSalesTipePasport.forEach((sale: any) => {
-        const date = sale.date;
-
-        if (!groupedData[date]) {
-          groupedData[date] = {
-            date:
-              filter === 'day'
-                ? formatDateToLocal(sale?.date) || sale?.date
-                : sale?.date,
-            'Pasaporte Extremo': 0,
-            'Pasaporte Aventura': 0,
-            'Pasaporte Fusión': 0,
-            'Ingreso Sin Atracciones': 0,
-            'Pasaporte Acuático Adultos': 0,
-            'Pasaporte Acuático Niños': 0,
-            'Ingreso General': 0,
-            'N/A': 0,
-          };
-        }
-
-        let pasaporteNames: string[];
-       
-
-        if (sale.id_park === 1) {
-          pasaporteNames = [
-            'Pasaporte Extremo',
-            'Pasaporte Aventura',
-            'Pasaporte Fusión',
-            'Ingreso Sin Atracciones',
-          ];
-       
-        } else if (sale.id_park === 2) {
-          pasaporteNames = [
-            'Pasaporte Acuático Adultos',
-            'Pasaporte Acuático Niños',
-            'Ingreso General',
-            'N/A',
-          ];
-         
-        } else {
-          pasaporteNames = [
-            'Pasaporte Tipo 1',
-            'Pasaporte Tipo 2',
-            'Pasaporte Tipo 3',
-            'Pasaporte Tipo 4',
-          ];
-         
-        }
-
-        groupedData[date][pasaporteNames[0]] +=
-          parseFloat(sale?.pastype1) 
-        groupedData[date][pasaporteNames[1]] +=
-          parseFloat(sale?.pastype2) 
-        groupedData[date][pasaporteNames[2]] +=
-          parseFloat(sale?.pastype3)
-        groupedData[date][pasaporteNames[3]] +=
-          parseFloat(sale?.pastype4)
-      });
-
-      const transformedData = Object.values(groupedData).map((group: any) => {
-        return {
-          date: group.date,
-          'Pasaporte Extremo': group['Pasaporte Extremo'].toString(),
-          'Pasaporte Aventura': group['Pasaporte Aventura'].toString(),
-          'Pasaporte Fusión': group['Pasaporte Fusión'].toString(),
-          'Ingreso Sin Atracciones':
-            group['Ingreso Sin Atracciones'].toString(),
-          'Pasaporte Acuático Adultos':
-            group['Pasaporte Acuático Adultos'].toString(),
-          'Pasaporte Acuático Niños':
-            group['Pasaporte Acuático Niños'].toString(),
-          'Ingreso General': group['Ingreso General'].toString(),
-          'N/A': group['N/A'].toString(),
-        };
-      });
-
-  
-      return transformedData;
-    }
-
-    console.warn('No hay registros de ventas.');
-    return [];
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of Users.' + error);
-  }
-}
-export async function getTotalSalesTipePasportCantidad(
+export async function getTotalSalesTipePasportCantidadNuevo(
   idPark: string,
   filter: string,
 ) {
   noStore();
-
   try {
-    const apiUrl = `/api/data/totalsalestipepasport`;
+    const apiUrl = `/api/data/getTotalSalesTipePasportNuevo`;
     const response = await axios.post(apiUrl, {
       idPark: idPark,
       filterType: filter,
     });
+    console.log(response);
 
+    const data = response.data.TotalSalesTipePasport;
+    const groupedData = data.reduce((acc: any, item: any) => {
+      const date = item.date;
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          total_sales: 0,
+          total_value: 0,
+        };
+      }
+      acc[date].total_sales += parseInt(item.total_sales, 10);
+      acc[date].total_value += parseInt(item.total_value, 10);
+      return acc;
+    }, {});
+    const transformedData = Object.values(groupedData).map((item: any) => ({
+      date:
+        filter === 'day'
+          ? formatDateToLocal(item?.date) || item?.date
+          : item?.date,
+      total_sales: item.total_sales,
+      total_value: item.total_value,
+      churn: item.churn ?? 0,
+    }));
+    return transformedData;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of Users.' + error);
+  }
+}
+
+export async function getTotalSalesTipePasportNuevo(
+  idPark: string,
+  filter: string,
+) {
+  noStore();
+  try {
+    const apiUrl = `/api/data/getTotalSalesTipePasportNuevo`;
+    const response = await axios.post(apiUrl, { idPark, filterType: filter });
     if (
       response.data.TotalSalesTipePasport &&
       response.data.TotalSalesTipePasport.length > 0
     ) {
       const groupedData: { [key: string]: any } = {};
-
       response.data.TotalSalesTipePasport.forEach((sale: any) => {
         const date = sale.date;
-
         if (!groupedData[date]) {
           groupedData[date] = {
             date:
               filter === 'day'
-                ? formatDateToLocal(sale?.date) || sale?.date
-                : sale?.date,
-            total_sales: 0,
-            totalTickets: 0,
+                ? formatDateToLocal(sale.date) || sale.date
+                : sale.date,
           };
         }
-
-        let pasaportePrices: number[];
-
-        if (sale.id_park === 1) {
-          pasaportePrices = [48600, 37000, 32000, 7600];
-        } else if (sale.id_park === 2) {
-          pasaportePrices = [19200, 14200, 7600, 0];
-        } else {
-          pasaportePrices = [0, 0, 0, 0];
-        }
-
-        // Calcular total ventas
-        const total_sales =
-          parseFloat(sale?.pastype1) * pasaportePrices[0] +
-          parseFloat(sale?.pastype2) * pasaportePrices[1] +
-          parseFloat(sale?.pastype3) * pasaportePrices[2] +
-          parseFloat(sale?.pastype4) * pasaportePrices[3];
-
-        // Calcular total de tickets vendidos
-        const totalTickets =
-          parseFloat(sale?.pastype1) +
-          parseFloat(sale?.pastype2) +
-          parseFloat(sale?.pastype3) +
-          parseFloat(sale?.pastype4);
-
-        groupedData[date].total_sales += total_sales;
-        groupedData[date].totalTickets += totalTickets;
+        groupedData[date][sale.name_passport] = sale.total_value;
       });
-
-      const transformedData = Object.values(groupedData).map((item: any) => ({
-        date: item.date,
-        total_sales: item.total_sales,
-        total_tickets: item.totalTickets,
-        churn: item.churn ?? 0,
+      const transformedData = Object.values(groupedData).map((group: any) => ({
+        date: group.date,
+        'Pasaporte Extremo': group['Pasaporte Extremo'] || '0',
+        'Pasaporte Aventura': group['Pasaporte Aventura'] || '0',
+        'Pasaporte Fusión': group['Pasaporte Fusión'] || '0',
+        'Ingreso Sin Atracciones': group['Ingreso Sin Atracciones'] || '0',
+        'Pasaporte Acuático Adultos': group['Pasaporte Acuático Adultos'] || '0',
+        'Pasaporte Acuático Niños': group['Pasaporte Acuático Niños'] || '0',
+        'Zona Acuática': group['Zona Acuática'] || '0',
+        'Ingreso General': group['Ingreso General'] || '0',
+        'N/A': group['N/A'] || '0',
       }));
-
       return transformedData;
     }
-
     console.warn('No hay registros de ventas.');
     return [];
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of Users.' + error);
+    throw new Error('Failed to fetch total number of Users. ' + error);
   }
+}
+
+export async function getTotalSalesNumTipePasportNuevo(
+  idPark: string,
+  filter: string,
+) {
+  noStore();
+  try {
+    const apiUrl = `/api/data/getTotalSalesTipePasportNuevo`;
+    const response = await axios.post(apiUrl, { idPark, filterType: filter });
+    if (
+      response.data.TotalSalesTipePasport &&
+      response.data.TotalSalesTipePasport.length > 0
+    ) {
+      const groupedData: { [key: string]: any } = {};
+      response.data.TotalSalesTipePasport.forEach((sale: any) => {
+        const date = sale.date;
+        if (!groupedData[date]) {
+          groupedData[date] = {
+            date:
+              filter === 'day'
+                ? formatDateToLocal(sale.date) || sale.date
+                : sale.date,
+          };
+        }
+        groupedData[date][sale.name_passport] = sale.total_sales;
+      });
+      const transformedData = Object.values(groupedData).map((group: any) => ({
+        date: group.date,
+        'Pasaporte Extremo': group['Pasaporte Extremo'] || '0',
+        'Pasaporte Aventura': group['Pasaporte Aventura'] || '0',
+        'Pasaporte Fusión': group['Pasaporte Fusión'] || '0',
+        'Ingreso Sin Atracciones': group['Ingreso Sin Atracciones'] || '0',
+        'Pasaporte Acuático Adultos':group['Pasaporte Acuático Adultos'] || '0',
+        'Pasaporte Acuático Niños': group['Pasaporte Acuático Niños'] || '0',
+        'Zona Acuática': group['Zona Acuática'] || '0',
+        'Ingreso General': group['Ingreso General'] || '0',
+        'N/A': group['N/A'] || '0',
+      }));
+      return transformedData;
+    }
+    console.warn('No hay registros de ventas.');
+    return [];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of Users. ' + error);
+  }
+}
+
+export async function getTotalCantTipePasportNuevo(
+  initialDate: string,
+  finalDate: string,
+) {
+  noStore();
+  try {
+    const apiUrl = `/api/data/getTotalSalesByDates`;
+    const response = await axios.post(apiUrl, {
+      initialDate: initialDate,
+      finalDate: finalDate,
+    });
+    if (
+      response.data.TotalSalesTipePasport &&
+      response.data.TotalSalesTipePasport.length > 0
+    ) {
+      const totalSalesByPassport: { [key: string]: number } = {
+        'Pasaporte Extremo': 0,
+        'Pasaporte Aventura': 0,
+        'Pasaporte Fusión': 0,
+        'Ingreso Sin Atracciones': 0,
+        'Pasaporte Acuático Adultos': 0,
+        'Pasaporte Acuático Niños': 0,
+        'Zona Acuática': 0,
+        'Ingreso General': 0,
+      };
+
+      response.data.TotalSalesTipePasport.forEach((sale: any) => {
+        const totalSales = Number(sale.total_sales) || 0; // Convertir a número
+        if (sale.name_passport in totalSalesByPassport) {
+          totalSalesByPassport[sale.name_passport] += totalSales;
+        }
+      });
+
+      return totalSalesByPassport;
+    }
+    console.warn('No hay registros de ventas.');
+    return [];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of Users. ' + error);
+  }
+}
+
+export async function getAllTicketsByStatus() {
+  noStore();
+  try {
+    const apiUrl = `/api/marketing/getAllTicketsByStatus`;
+    const response = await axios.get(apiUrl);
+    const totalTickets = response.data.reduce(
+      (acc: any, item: any) => acc + item.total_tickets,
+      0,
+    );
+
+    const formattedData = response.data.map((item: any) => ({
+      name: item.status,
+      amount: item.total_tickets,
+      share: `${((item.total_tickets / totalTickets) * 100).toFixed(1)}%`,
+      color: getColor(item.status),
+    }));
+
+    return formattedData;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of Users. ' + error);
+  }
+}
+
+function getColor(status: string): string {
+  const colors: Record<string, string> = {
+    Usado: 'bg-blue-500 dark:bg-green-500',
+    Pendiente: 'bg-gray-500 dark:bg-gray-500',
+    'No exitoso': 'bg-violet-500 dark:bg-red-500',
+    Valido: 'bg-green-500 dark:bg-blue-500',
+    Devolucion: 'bg-yellow-500 dark:bg-gray-500',
+    Cancelado: 'bg-red-500 dark:bbg-red-500',
+  };
+  return colors[status] || 'bg-gray-300 dark:bg-gray-300';
 }

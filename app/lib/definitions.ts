@@ -18,15 +18,17 @@ export type Ticket = {
   count_kid: number;
   invoice_electronic: number;
   created_at: string;
+  updated_at: string;
   ticket_info: TicketInfo[];
   price_ticket: number;
-  id_operation:number;
+  id_operation:string;
+  motive:string;
 };
 export type TicketInfo = {
   type: string;
   count: number;
 };
-export type LoginResponse = { user?: User; message: string };
+export type LoginResponse = { user?: User; message: string ; token?: string; };
 
 export type User = {
   idUser: string;
@@ -37,6 +39,7 @@ export type User = {
   park: string;
   changePass?: string;
   statusprofile?: string;
+  token?: string;
 };
 
 export type ApiResponse = {
@@ -52,6 +55,7 @@ export type ApiResponse = {
     statusprofile?: string;
   }; 
    message: string;
+   token?: string;
 };
 
 export type UserProfile = {
@@ -64,7 +68,7 @@ export type UserProfile = {
   updated_at: string;
   idpark: number;
   changepassword: number;
-  statusprofile: 'Enable' | 'Disable';  // solo "Enable" o "Disable"
+  statusprofile: 'Habilitado' | 'Desahbilitado';  // solo "Enable" o "Disable"
 };
 
 export type CandidatosTable = {

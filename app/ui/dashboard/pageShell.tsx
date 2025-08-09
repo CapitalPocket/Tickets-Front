@@ -7,10 +7,11 @@ import { Label } from 'recharts';
 import React, { useState } from 'react';
 import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group';
 import { cx, focusRing } from '@/app/lib/utils';
-import ChartComposition from './chartSalesComposition';
-import BarChartSales from './barChart';
+
 import ChartSalesComposition from './chartSalesComposition';
 import ChartCantiComposition from './chartCantiComposition';
+import { DateRangePickerPresetsExample } from './filterbarCalendar';
+import BarListComponent from './barList';
 
 const ToggleGroup = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Root>,
@@ -79,7 +80,7 @@ export default function PageShell() {
               </SelectNative>
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <ToggleGroup
+            <ToggleGroup
                   type="single"
                   defaultValue={selectedPeriod}
                   aria-label="Time period selection"
@@ -115,16 +116,19 @@ export default function PageShell() {
                     Años
                   </ToggleGroupItem>
                 </ToggleGroup>
+              
               </div>
             </div>
           </div>
         </header>
         <main>
           {/* Pasar los valores seleccionados a KpiCardNumber */}
+         
           <KpiCardNumber
             selectedPeriod={selectedPeriod}
             selectedPark={selectedPark}
           />
+         
           {/* <BarChartSales
             selectedPeriod={selectedPeriod}
             selectedPark={selectedPark}
@@ -138,6 +142,7 @@ export default function PageShell() {
             selectedPeriod={selectedPeriod}
             selectedPark={selectedPark}
           />
+          <BarListComponent/>
         </main>
       </div>
     </div>

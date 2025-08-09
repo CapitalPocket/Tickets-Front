@@ -65,7 +65,7 @@ const RegisterPage: React.FC = () => {
                 <h1 className="text-2xl font-bold mb-6 text-center">Registrar Usuario</h1>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre:</label>
+                        <label id="name" className="block text-sm font-medium text-gray-700">Nombre:</label>
                         <input
                             type="text"
                             id="name"
@@ -77,7 +77,7 @@ const RegisterPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email:</label>
+                        <label id="email" className="block text-sm font-medium text-gray-700">Email:</label>
                         <input
                             type="email"
                             id="email"
@@ -90,7 +90,7 @@ const RegisterPage: React.FC = () => {
                         {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña:</label>
+                        <label id="password" className="block text-sm font-medium text-gray-700">Contraseña:</label>
                         <input
                             type="password"
                             id="password"
@@ -102,7 +102,7 @@ const RegisterPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label htmlFor="rol" className="block text-sm font-medium text-gray-700">Rol:</label>
+                        <label id="rol" className="block text-sm font-medium text-gray-700">Rol:</label>
                         <select
                             id="rol"
                             name="rol"

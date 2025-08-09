@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: '%s | Tickets',
     default: 'Metro Parques Dashboard',
   },
-  description: 'Sistema de Tickets ',
+  description: 'Sistema de Tickets',
 };
 
 

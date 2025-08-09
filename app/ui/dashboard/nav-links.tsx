@@ -42,7 +42,7 @@ export const links = [
     roles: ['administrador', 'marketing'],
   },
   {
-    name: 'Facturas',
+    name: 'Informes',
     href: '/dashboard/invoices',
     icon: ClipboardDocumentIcon,
     roles: ['administrador', 'marketing'],

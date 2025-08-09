@@ -16,7 +16,7 @@ async function getUser(
     );
 
     const apiResponse = response.data;
-    const { message } = apiResponse;
+    const { message ,token } = apiResponse;
 
     if (apiResponse.user) {
       const user = apiResponse.user;
@@ -32,6 +32,7 @@ async function getUser(
           statusprofile: user.statusprofile,
         },
         message,
+        token: token,
       };
     }
     return { message };
@@ -48,7 +49,7 @@ export const {handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       async authorize(credentials) {
         const parsedCredentials = z
-          .object({ email: z.string().min(3), password: z.string().min(6) })
+          .object({ email: z.string().min(3), password: z.string().min(4) })
           .safeParse(credentials);
 
         if (parsedCredentials.success) {
@@ -70,6 +71,7 @@ export const {handlers, auth, signIn, signOut } = NextAuth({
             role: response.user?.rol,
             park: response.user?.park,
             changePass: response.user?.changePass,
+            token: response.token,
           };
         }
         return null;

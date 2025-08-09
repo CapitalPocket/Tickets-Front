@@ -7,39 +7,37 @@ export default function TicketStatus({ status }: { status: string }) {
       className={clsx(
         'inline-flex items-center rounded-full px-2 py-1 text-xs',
         {
-          'bg-green-500 text-white': status === 'Valido', // Verde para tickets válidos
-          'bg-blue-500 text-white': status === 'Usado', // Azul para tickets usados
-          'bg-red-500 text-white': status === 'Cancelado', // Rojo para tickets cancelados
-          'bg-amber-500 text-white': status === 'Devolucion', // Ámbar para devoluciones
+          'bg-green-500 text-white': status === 'Valido',
+          'bg-blue-500 text-white': status === 'Usado',
+          'bg-red-500 text-white': status === 'Cancelado',
+          'bg-amber-500 text-white': status === 'Devolucion',
+          'bg-violet-500 text-white': status === 'No exitoso',
+          'bg-orange-400 text-white': status === 'Desconocido',
+
         },
       )}
     >
       {status === 'Valido' ? (
         <>
-         Valido
-         <CheckIcon className="ml-1 w-4 text-white" />
-         
+          Valido
+          <CheckIcon className="ml-1 w-4 text-white" />
         </>
       ) : null}
-      {status === 'Usado' ? (
-        <>
-         Usado
-         
-        </>
-      ) : null}
+      {status === 'Usado' ? <>Usado</> : null}
       {status === 'Cancelado' ? (
         <>
           Cancelado
           <XMarkIcon className="ml-1 w-4 text-white" />
         </>
       ) : null}
-       {status === 'Devolucion' ? (
+      {status === 'Devolucion' ? (
         <>
           Devolucion
           <ClockIcon className="ml-1 w-4  text-gray-600" />
-         
         </>
       ) : null}
+      {status === 'No exitoso' ? <>No exitoso</> : null}
+      {status === 'Desconocido' ? <>Desconocido</> : null}
     </span>
   );
 }

@@ -11,12 +11,14 @@ declare module 'next-auth' {
       role?: string;
       changePass?: string;
     };
+    accessToken ?: string;
   }
   interface User {
     idUser?: string;
     park?: string;
     role?: string;
     changePass?: string;
+    token?: string;
   }
 }
 

@@ -50,7 +50,7 @@ const Graphs = ({ metric, park }: { metric: string, park: string }) => {
         };
 
         fetchInvoices();
-    }, [data, park, metric]);
+    }, [metric, park]);
 
     const options = {
         responsive: true,

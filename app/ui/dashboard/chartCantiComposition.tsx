@@ -4,8 +4,7 @@ import { AreaChart } from '@/app/components/AreaChart';
 import { Card } from '@/app/components/Card';
 import { Divider } from '@/app/components/Divider';
 import {
-  getTotalSalesNumTipePasport,
-  getTotalSalesTipePasport,
+  getTotalSalesNumTipePasportNuevo,
 } from '@/app/lib/data';
 
 const valueFormatter = (value: number) => {
@@ -29,11 +28,13 @@ const colorMap: Record<
     | 'pink'
     | 'lime'
     | 'gray'
+    | 'orange'
+    | 'redStatus'
   )[]
 > = {
   1: ['purple', 'blue', 'cyan', 'emerald'],
-  2: ['violet', 'pink', 'lime', 'gray'],
-  3: ['purple', 'blue', 'cyan', 'emerald', 'violet', 'pink', 'lime'],
+  2: ['violet', 'orange','lime','blue'],
+  3: ['purple', 'blue', 'cyan', 'lime','emerald', 'redStatus','orange','gray'],
 };
 
 export default function ChartCantiComposition({
@@ -53,7 +54,7 @@ export default function ChartCantiComposition({
     const fetchData = async () => {
       try {
         const idPark: any = Number(selectedPark);
-        const salesData = await getTotalSalesNumTipePasport(
+        const salesData = await getTotalSalesNumTipePasportNuevo(
           `${idPark}`,
           selectedPeriod,
         );
@@ -68,6 +69,7 @@ export default function ChartCantiComposition({
               'Ingreso Sin Atracciones',
             ],
             2: [
+              'Zona Acuática',
               'Pasaporte Acuático Adultos',
               'Pasaporte Acuático Niños',
               'Ingreso General',
@@ -77,6 +79,7 @@ export default function ChartCantiComposition({
               'Pasaporte Aventura',
               'Pasaporte Fusión',
               'Ingreso Sin Atracciones',
+              'Zona Acuática',
               'Pasaporte Acuático Adultos',
               'Pasaporte Acuático Niños',
               'Ingreso General',
@@ -99,7 +102,7 @@ export default function ChartCantiComposition({
       <Card className="mt-6 !p-0">
         <div className="px-6 py-3">
           <h1 className="text-base font-medium text-gray-900 dark:text-gray-50">
-            Número de tickes Vendidos por pasaporte
+            Número de Pasaportes Vendidos 
           </h1>
         </div>
         <Divider className="!my-0 [&>div]:dark:!bg-gray-900" />

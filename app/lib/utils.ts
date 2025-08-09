@@ -33,6 +33,34 @@ export const formatDateToLocal = (
   return formatter.format(utcDate);
 };
 
+export const formatFullDateToLocal = (
+  dateStr: string | null,
+  locale: string = 'es-CO'
+) => {
+  if (!dateStr) {
+    return ''; 
+  }
+  const date = new Date(dateStr);
+  const utcDate = new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getHours(),
+    date.getMinutes()
+  );
+
+  const options: Intl.DateTimeFormatOptions = {
+    minute: 'numeric',
+    hour: 'numeric',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  };
+
+  const formatter = new Intl.DateTimeFormat(locale, options);
+  return formatter.format(utcDate);
+};
+
 
 
 export const generatePagination = (currentPage: number, totalPages: number) => {

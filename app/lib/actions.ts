@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { sql } from '@vercel/postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { signIn } from '@/auth';
+import { auth, signIn } from '@/auth';
 import { AuthError } from 'next-auth';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -46,7 +46,7 @@ const FormSchemaa = z.object({
     .nonempty({ message: 'Nombre de usuario es Requerido.' }),
   nombre: z.string().nonempty({ message: 'Nombre es Requerido.' }),
   password: z.string().nonempty({ message: 'password es Requerido.' }),
-  rol: z.string().min(1, { message: 'Rol del usurio es requerido.' }),
+  rol: z.string().min(1, { message: 'Rol del usuario es requerido.' }),
   park: z.string().nonempty({ message: 'Seleccione un parque.' }),
 });
 
@@ -105,9 +105,12 @@ export async function createCandidato(prevState: Statee, formData: FormData) {
 
 export async function validateTicket(ticketCode: any) {
   try {
+    const session = await auth();
+    const token = session?.accessToken;
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/validateTicket`,
+      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/validateTicketNew`,
       ticketCode,
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data.message;
   } catch (error) {
@@ -116,58 +119,65 @@ export async function validateTicket(ticketCode: any) {
   }
 }
 
-// const UpdateCandidato = FormSchemaa.omit({ id: true });
+const FormSchemaUser = z.object({
+  nombreUser: z
+    .string()
+    .nonempty({ message: 'Nombre de usuario es Requerido.' }),
+  nombre: z.string().nonempty({ message: 'Nombre es Requerido.' }),
+  rol: z.string().min(1, { message: 'Rol del usuario es requerido.' }),
+});
 
-// export async function updateCandidato(
-//   id: string,
-//   prevState: Statee,
-//   formData: FormData,
-// ) {
-//   const formObject = Object.fromEntries(formData.entries());
-//   const validatedFields = UpdateCandidato.safeParse({
-//     tipoid: formObject.tipoid,
-//     nombre: formObject.nombre,
-//     celular: formObject.celular,
-//     cargo: formObject.cargo,
-//     correo: formObject.correo,
-//     motivo: formObject.motivo,
-//     estado_proceso: formObject.estado_proceso,
-//     fecha_envio: formObject.fecha_envio,
-//     fecha_ingreso: formObject.fecha_ingreso,
-//     grupo: formObject.grupo,
-//     estadoCandidato: formObject.estadoCandidato
-//       ? Number(formObject.estadoCandidato)
-//       : undefined,
-//     user_creo: formObject.user_creo ? Number(formObject.user_creo) : undefined,
-//     page: formObject.page,
-//     keyword: formObject.keyword,
-//   });
+const updateuser = FormSchemaUser.omit({});
+export async function updateCandidato(
+  id: number,
+  prevState: Statee,
+  formData: FormData,
+) {
+  const formObject = Object.fromEntries(formData.entries());
+  const validatedFields = updateuser.safeParse({
+    nombre: formObject.nombre,
+    nombreUser: formObject.nombreUser,
+    rol: formObject.rol,
+    park: formObject.park,
+  });
 
-//   if (!validatedFields.success) {
-//     return {
-//       errors: validatedFields.error.flatten().fieldErrors,
-//       message: 'Missing Fields. Failed to Update Candidate.',
-//     };
-//   }
-
-//   const {
-
-//   } = validatedFields.data;
-
-//   try {
-
-//   } catch (error) {
-//     return { message: 'Database Error: Failed to Update Candidate.' };
-//   }
-
-// }
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Faltan campos. No se ha podido actualizar el Usuario.',
+    };
+  }
+  try {
+    const { nombre, nombreUser, rol } = validatedFields.data;
+    const session = await auth();
+    const token = session?.accessToken;
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/updateUserByIdTaquilla`,
+      {
+        id: id,
+        updates: {
+          name: nombre,
+          email: nombreUser,
+          rol: rol,
+        },
+      },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    revalidatePath('/dashboard/candidatos');
+    redirect('/dashboard/candidatos');
+  } catch (error) {
+    return { message: 'Database Error: Failed to Update Candidate' };
+  }
+}
 
 export async function updateUser(user: any) {
   try {
-    
+    const session = await auth();
+    const token = session?.accessToken;
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACK_LINK}/api/taquilla/updateUserByIdTaquilla`,
-      user,
+      { user },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     revalidatePath('/dashboard/candidatos');
   } catch (error) {

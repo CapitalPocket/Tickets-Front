@@ -2,13 +2,14 @@
 
 /* Aumenta el tamaño de las celdas */
 .rdp-day {
-    width: 4rem; /* Ancho de las celdas */
-    height: 4rem; /* Alto de las celdas */
-    font-size: 1.25rem; /* Aumentar tamaño de la fuente */
-    margin: 0.5rem; /* Añadir espacio entre celdas */
-    font-size: 1.5rem;
+    width: 2.8rem; /* Ancho de las celdas */
+    height: 2.8rem; /* Alto de las celdas */
+    font-size: 1rem; /* Aumentar tamaño de la fuente */
+    margin: 0.1rem; /* Añadir espacio entre celdas */
+    font-size: 1rem;
     align-items: center;
     justify-content: center;
+    display: flex; /* Asegura que el contenido esté centrado */
 }
 
 /* Aplicar fondo rojo para días deshabilitados */

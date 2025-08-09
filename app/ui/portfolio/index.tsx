@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { formatCurrency } from "@/app/lib/utils";
 
 const Passports = ({ park }: any) => {
   const [modalOpen, setModalOpen] = useState<any>(false);
@@ -21,7 +22,7 @@ const Passports = ({ park }: any) => {
 
   const openModal = (passport: any) => {
     setSelectedPassport(passport);
-    setNewPrice(passport.price_passport);
+    setNewPrice(passport.current_price);
     setModalOpen(true);
   };
 
@@ -57,7 +58,7 @@ const Passports = ({ park }: any) => {
             </div>
             <div className="border-t p-4 flex items-center justify-between">
               <p className="text-lg font-bold text-gray-700">
-                Precio: <br/> $ {passport.price_passport.toLocaleString()}
+                Precio: <br/> {formatCurrency(passport.current_price)}
               </p>
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"

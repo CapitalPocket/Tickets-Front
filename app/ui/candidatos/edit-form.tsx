@@ -1,83 +1,42 @@
 'use client';
-import { CustomerField, CandidatosTable } from '@/app/lib/definitions';
+import {  UserProfile } from '@/app/lib/definitions';
 import { Breadcrumb } from '@/app/ui/candidatos/breadcrumbs';
 import Link from 'next/link';
 import {
-  BuildingOffice2Icon,
   ClipboardDocumentCheckIcon,
   IdentificationIcon,
   UserIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
-import { createCandidato } from '@/app/lib/actions';
+import { createCandidato, updateCandidato } from '@/app/lib/actions';
 import { useFormState } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function Form({
+  user,
   breadcrumbs,
 }: {
+  user: UserProfile;
   breadcrumbs: Breadcrumb[];
 }) {
-  const initialState = { message: null, errors: {}, fecha_envio: null };
-  const [state, dispatch] = useFormState(createCandidato, initialState);
+  const initialState = { message: null, errors: {} };
+  const updateInvoiceWithId = updateCandidato.bind(null, user.id_user);
+  const [state, dispatch] = useFormState(updateInvoiceWithId, initialState);
  
   const [selectedRole, setSelectedRole] = useState<string>('');
-  const [selectedPark, setSelectedPark] = useState<string>('');
+
 
   const handleRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRole(event.target.value);
   };
 
-  const notify = (state: any) => {
-    if (state.message === 'Faltan campos.') {
-      toast.error(state.message, {
-        position: 'top-center',
-        autoClose: 3000, // Increase autoClose for errors
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    } else {
-      toast.success(state.message, {
-        position: 'top-center',
-        autoClose: 5000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (state?.message) {
-      notify(state);
-
-      if (state?.message == 'Usuario creado con exito') {
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      }
-    }
-  }, [state]);
-
-  useEffect(() => {
-    if (selectedRole === 'administrador' || selectedRole === 'marketing') {
-      setSelectedPark('3'); // 3 representa "Todos los parques"
-    } else {
-      setSelectedPark('3');
-    }
-  }, [selectedRole]);
-
   return (
     <div className='md:w-[50%] mx-auto flex flex-col justify-center'>
       <ToastContainer />
       <form action={dispatch}>
+      <input type="hidden" name="park" value={"3"} />
         <div className="rounded-md bg-gray-50 p-4 md:p-6">
           {/* Candidato Nombre */}
           <div className="mb-4">
@@ -90,6 +49,7 @@ export default function Form({
                   id="nombre"
                   name="nombre"
                   type="text"
+                  defaultValue={user.name}          
                   placeholder="Nombre apellido"
                   className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
                   aria-describedby="amount-error"
@@ -111,7 +71,7 @@ export default function Form({
           <div className="mb-4">
             <label
              id="nombreUser"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-medium "
             >
               Nombre de Usuario
             </label>
@@ -122,6 +82,7 @@ export default function Form({
                   name="nombreUser"
                   type="text"
                   min={3}
+                  defaultValue={user.email}    
                   placeholder="Usuario"
                   className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
                   aria-describedby="amount-error"
@@ -138,37 +99,7 @@ export default function Form({
               </div>
             </div>
           </div>
-          {/* Candidato Password */}
-          <div className="mb-4">
-            <label
-             id="password"
-              className="mb-2 block text-sm font-medium"
-            >
-              Contraseña
-            </label>
-            <div className="relative mt-2 rounded-md">
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  min={3}
-                  placeholder="*******"
-                  className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
-                  aria-describedby="amount-error"
-                />
-                <ClipboardDocumentCheckIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
-              </div>
-              <div id="amount-error" aria-live="polite" aria-atomic="true">
-                {state.errors?.password &&
-                  state.errors.password.map((error: string) => (
-                    <p className="mt-2 text-sm text-red-500" key={error}>
-                      {error}
-                    </p>
-                  ))}
-              </div>
-            </div>
-          </div>
+          
           {/* Candidato tipo de identificacion */}
           <div className="mb-4">
             <label id="rol" className="mb-2 block text-sm font-medium">
@@ -179,7 +110,7 @@ export default function Form({
                 id="rol"
                 name="rol"
                 className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
-                defaultValue=""
+                defaultValue={user.rol}    
                 aria-describedby="customer-error"
                 onChange={handleRoleChange}
               >
@@ -210,35 +141,9 @@ export default function Form({
                 ))}
             </div>
           </div>
-          {/* Lista de parques (solo para "taquillero" o "supervisor") */}
-          {true && (
-            <div className="mb-4" hidden>
-              <label id="park" className="mb-2 block text-sm font-medium">
-                Seleccione el parque
-              </label>
-              <div className="relative">
-                <select
-                  id="park"
-                  name="park"
-                  className="peer block w-full cursor-not-allowed rounded-md border border-gray-200 py-2 pl-10 text-sm"
-                  value={'3'}
-                >
-                  <option value="3">Todos los parques</option>
-                </select>
-                <BuildingOffice2Icon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
-              </div>
-              <div id="customer-error" aria-live="polite" aria-atomic="true">
-                {state.errors?.park &&
-                  state.errors?.park?.map((error: string) => (
-                    <p className="mt-2 text-sm text-red-500" key={error}>
-                      {error}
-                    </p>
-                  ))}
-              </div>
-            </div>
-          )}
+         
         </div>
-        <div className="mt-6 flex justify-end gap-4">
+        <div className="mt-6 flex justify-start gap-4">
           <Link
             href={breadcrumbs[0].href}
             className="flex h-10 items-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
@@ -246,8 +151,8 @@ export default function Form({
             Cancel
           </Link>
 
-          <Button type="submit" onClick={notify}>
-            Guardar
+          <Button type="submit">
+            Editar Usuario
           </Button>
         </div>
       </form>
